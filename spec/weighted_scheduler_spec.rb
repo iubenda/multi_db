@@ -7,8 +7,7 @@ require MULTI_DB_SPEC_DIR + '/../lib/multi_db/scheduler'
 require MULTI_DB_SPEC_DIR + '/../lib/multi_db/weighted_scheduler'
 
 describe MultiDb::WeightedScheduler do
-  
-  before(:each) do
+  before do
     ActiveRecord::Base.configurations = YAML::load(File.open(MULTI_DB_SPEC_DIR + '/config/database.yml'))
     ActiveRecord::Base.establish_connection :test
     ActiveRecord::Migration.verbose = false
@@ -18,13 +17,13 @@ describe MultiDb::WeightedScheduler do
     class FooModel < ActiveRecord::Base; end
     @sql = 'SELECT 1 + 1 FROM DUAL'
   end
-  
+
   before(:each) do
     MultiDb::ConnectionProxy.master_models = ['MasterModel']
     MultiDb::ConnectionProxy.setup!(MultiDb::WeightedScheduler)
     @proxy      = ActiveRecord::Base.connection_proxy
     @scheduler  = @proxy.scheduler
-    
+
     @master = @proxy.master.retrieve_connection
   end
 
@@ -40,17 +39,17 @@ describe MultiDb::WeightedScheduler do
       @scheduler.total_weight
     end
   end
-  
+
   describe "distributes queries according to weight" do
-    
+
     it "next_index! distributes the queries according to weight" do
       n = 100_000
       # Fire off pretend queries
       queries = n.times.map do
         @scheduler.send( :next_index! )
       end
-      
-      # Count queries and group by the index the slave machine has 
+
+      # Count queries and group by the index the slave machine has
       queries.inject({}){|hsh, idx|
         hsh[idx].nil? ? hsh[idx] = 1 : hsh[idx] += 1
         hsh
@@ -58,7 +57,7 @@ describe MultiDb::WeightedScheduler do
         # for large number of queries (> 10 000), the distribution is proportional to the weights. For 100k 'queries', we're accurate to one decimal.
         weight_portion  = (@scheduler.items[slave_idx]::WEIGHT/@scheduler.total_weight.to_f).round
         query_portion   = (query_count/n.to_f).round
-        
+
         weight_portion.should == query_portion
       end
     end
