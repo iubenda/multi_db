@@ -12,8 +12,10 @@ module MultiDb
       :select_rows, :select, :verify!, :raw_connection, :active?, :reconnect!,
       :disconnect!, :reset_runtime, :log, :log_info ]
 
-    if ActiveRecord.const_defined?(:SessionStore)
-      DEFAULT_MASTER_MODELS = ['ActiveRecord::SessionStore::Session']
+    DEFAULT_MASTER_MODELS = if ActiveRecord.const_defined?(:SessionStore)
+      ['ActiveRecord::SessionStore::Session']
+    else
+      []
     end
 
     attr_accessor :master
