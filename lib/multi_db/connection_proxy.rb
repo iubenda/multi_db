@@ -172,7 +172,11 @@ module MultiDb
     def send_to_master(method, *args, &block)
       reconnect_master! if @reconnect
       @master.retrieve_connection.send(method, *args, &block)
-    rescue => e
+    rescue ActiveRecord::RecordNotUnique => e
+      # On record not unique violation do not reconnect and keep the current connection in order to correctly
+      # handle the violation within a transaction.
+      raise e
+    rescue StandardError => e
       raise_master_error(e)
     end
 

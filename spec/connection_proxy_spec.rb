@@ -142,6 +142,13 @@ describe MultiDb::ConnectionProxy do
       @proxy.insert(@sql)
     end
 
+    it 'should not reconnect on ActiveRecord::RecordNotUnique error' do
+      @master.should_receive(:insert).once.and_raise(ActiveRecord::RecordNotUnique, "")
+      @master.should_receive(:insert).once
+      @proxy.should_not_receive(:reconnect_master!)
+      2.times { @proxy.insert(@sql) rescue nil }
+    end
+
     it 'should reload models from the master' do
       foo = FooModel.create!(:bar => 'baz')
       foo.bar = "not_saved"
