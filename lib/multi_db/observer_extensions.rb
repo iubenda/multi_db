@@ -1,17 +1,13 @@
 module MultiDb
   module ObserverExtensions
-    def self.included(base)
-      base.alias_method_chain :update, :masterdb
-    end
-
     # Send observed_method(object) if the method exists.
-    def update_with_masterdb(observed_method, object) #:nodoc:
+    def update(observed_method, object, *extra_args, &block) #:nodoc:
       if object.connection.respond_to?(:with_master)
         object.connection.with_master do
-          update_without_masterdb(observed_method, object)
+          super
         end
       else
-        update_without_masterdb(observed_method, object)
+        super
       end
     end
   end
